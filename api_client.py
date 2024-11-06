@@ -5,12 +5,6 @@ class APIClient:
         self.base_url = base_url
         self.session = session or requests.Session()
 
-    async def async_get_todo(self, todo_id):
-        loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(None, self.session.get, f"{self.base_url}/todos/{todo_id}")
-        response.raise_for_status()
-        return response.json()
-
     def get_todo(self, todo_id):
         try:
             response = self.session.get(f"{self.base_url}/todos/{todo_id}")
@@ -37,3 +31,9 @@ class APIClient:
         response = self.session.delete(f"{self.base_url}/todos/{todo_id}")
         response.raise_for_status()
         return response.status_code == 200
+    
+    async def async_get_todo(self, todo_id):
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(None, self.session.get, f"{self.base_url}/todos/{todo_id}")
+        response.raise_for_status()
+        return response.json()

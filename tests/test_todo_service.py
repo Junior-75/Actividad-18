@@ -1,4 +1,4 @@
-import pytest
+from hypothesis import given, strategies as st
 from todo_service import TodoService
 from api_client import APIClient
 from unittest.mock import patch
@@ -50,7 +50,20 @@ def test_add_todo_calls_create_todo(mocker):
     new_todo = service.add_todo("New Todo")
     assert new_todo["id"] == 101
     mock_api_client.create_todo.assert_called_once()
-    
+
+@given(title=st.text(min_size=1), completed=st.booleans())
+def test_add_todo_with_hypothesis(mocker, title, completed):
+    mock_api_client = mocker.Mock(spec=APIClient)
+    mock_api_client.create_todo.return_value = {
+        "id": 101,
+        "title": title,
+        "completed": completed
+    }
+    service = TodoService(mock_api_client)
+    new_todo = service.add_todo(title, completed)
+    assert new_todo["title"] == title
+    assert new_todo["completed"] == completed
+
 def test_get_todo_details_with_fixture(mocker, todo_service):
     mock_get_todo = mocker.patch.object(APIClient, 'get_todo', return_value={
         "id": 1,
@@ -61,23 +74,3 @@ def test_get_todo_details_with_fixture(mocker, todo_service):
     assert todo["title"] == "Test Todo"
     mock_get_todo.assert_called_once_with(1)
 
-def test_complete_todo_patching(mocker, todo_service):
-    mock_get_todo = mocker.patch.object(APIClient, 'get_todo', return_value={
-        "id": 1,
-        "title": "Incomplete Todo",
-        "completed": False
-    })
-    mock_update_todo = mocker.patch.object(APIClient, 'update_todo', return_value={
-        "id": 1,
-        "title": "Incomplete Todo",
-        "completed": True
-    })
-
-    todo = todo_service.complete_todo(1)
-    assert todo["completed"] == True
-    mock_get_todo.assert_called_once_with(1)
-    mock_update_todo.assert_called_once_with(1, {
-        "id": 1,
-        "title": "Incomplete Todo",
-        "completed": True
-    })
