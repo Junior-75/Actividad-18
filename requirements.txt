@@ -1,0 +1,7 @@
+pytest
+pytest-cov
+requests
+requests-mock
+pytest-mock
+pytest-asyncio
+pytest-benchmark
