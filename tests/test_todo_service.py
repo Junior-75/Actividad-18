@@ -51,6 +51,16 @@ def test_add_todo_calls_create_todo(mocker):
     assert new_todo["id"] == 101
     mock_api_client.create_todo.assert_called_once()
 
+def test_get_todo_details_with_fixture(mocker, todo_service):
+    mock_get_todo = mocker.patch.object(APIClient, 'get_todo', return_value={
+        "id": 1,
+        "title": "test todo",
+        "completed": False
+    })
+    todo = todo_service.get_todo_details(1)
+    assert todo["title"] == "Test Todo"
+    mock_get_todo.assert_called_once_with(1)
+    
 @given(title=st.text(min_size=1), completed=st.booleans())
 def test_add_todo_with_hypothesis(mocker, title, completed):
     mock_api_client = mocker.Mock(spec=APIClient)
@@ -63,14 +73,3 @@ def test_add_todo_with_hypothesis(mocker, title, completed):
     new_todo = service.add_todo(title, completed)
     assert new_todo["title"] == title
     assert new_todo["completed"] == completed
-
-def test_get_todo_details_with_fixture(mocker, todo_service):
-    mock_get_todo = mocker.patch.object(APIClient, 'get_todo', return_value={
-        "id": 1,
-        "title": "test todo",
-        "completed": False
-    })
-    todo = todo_service.get_todo_details(1)
-    assert todo["title"] == "Test Todo"
-    mock_get_todo.assert_called_once_with(1)
-

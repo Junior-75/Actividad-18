@@ -5,3 +5,4 @@ requests-mock
 pytest-mock
 pytest-asyncio
 pytest-benchmark
+sentry-sdk
