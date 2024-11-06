@@ -1,5 +1,6 @@
 import pytest
 from api_client import APIClient
+import asyncio
 
 # Usaremos requests-mock para facilitar el mocking de requests
 import requests
@@ -63,3 +64,51 @@ def test_get_todo_integration():
     client = APIClient("https://jsonplaceholder.typicode.com")
     todo = client.get_todo(1)
     assert todo["id"] == 1
+    
+def test_get_todo_not_found(mocker):
+    mock_session = mocker.Mock()
+    mock_response = mocker.Mock()
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Client Error: Not Found")
+    mock_session.get.return_value = mock_response
+
+    client = APIClient("https://example.com", session=mock_session)
+    
+    with pytest.raises(Exception) as exc_info:
+        client.get_todo(999)
+    assert "HTTP error occurred" in str(exc_info.value)
+
+@pytest.mark.parametrize("todo_id,expected_title", [
+    (1, "Test Todo 1"),
+    (2, "Test Todo 2"),
+    (3, "Test Todo 3"),
+])
+def test_get_todo_parametrized(mocker, todo_id, expected_title):
+    mock_session = mocker.Mock()
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": todo_id,
+        "title": expected_title,
+        "completed": False
+    }
+    mock_session.get.return_value = mock_response
+
+    client = APIClient("https://example.com", session=mock_session)
+    todo = client.get_todo(todo_id)
+    assert todo["title"] == expected_title
+    
+@pytest.mark.asyncio
+async def test_async_get_todo(mocker):
+    mock_session = mocker.Mock()
+    mock_response = mocker.Mock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "id": 1,
+        "title": "Async Todo",
+        "completed": False
+    }
+    mock_session.get.return_value = mock_response
+
+    client = APIClient("https://example.com", session=mock_session)
+    todo = await client.async_get_todo(1)
+    assert todo["title"] == "Async Todo"
